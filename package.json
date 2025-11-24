@@ -1,0 +1,26 @@
+{
+  "name": "auth1b",
+  "version": "1.0.0",
+  "description": "+ AuthN: who you are\r     + sth you know: password\r     + sth you have: physical devices\r     + sth you are: biometrics\r     + some authentication methods: \r         + password-based\r         + multi-factor authN (MFA)\r         + single-sign on (SSO)\r         + magic link/passwordless\r + AuthZ: what you have access to\r     + usually done after successfull authentication\r     + info is transmitted through an Access Token (Authorization credential, in the form of an opaque string or JWT, used to access an API)\r     + Role-based access control (RBAC)",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon --verbose server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.16.3",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}

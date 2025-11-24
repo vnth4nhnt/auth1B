@@ -1,0 +1,16 @@
+node_modules
+.git
+.github
+chatGPT
+README.md
+LICENSE
+.vscode
+npm-debug.log
+coverage
+.env
+.env.sample
+.editorconfig
+.aws
+dist
+images
+test.rest

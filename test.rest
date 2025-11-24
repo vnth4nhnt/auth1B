@@ -1,0 +1,41 @@
+# install extension REST Client on vscode to use
+
+GET http://localhost:6868/
+###
+GET http://localhost:6868/api/test/all
+Origin: null
+###
+
+GET http://localhost:6868/api/test/user
+
+###
+
+GET http://localhost:6868/api/test/mod
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NSwiaWF0IjoxNzYzOTYzMDc2LCJleHAiOjE3NjQwNDk0NzZ9.H3SWWXAv3WkypfgkJ9yIBHfx7wjLHMAXOH1F89E0Jf4
+
+###
+
+GET http://localhost:6868/api/test/admin
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NSwiaWF0IjoxNzYzOTYzMDc2LCJleHAiOjE3NjQwNDk0NzZ9.H3SWWXAv3WkypfgkJ9yIBHfx7wjLHMAXOH1F89E0Jf4
+
+###
+
+POST http://localhost:6868/api/auth/signup
+Content-Type: application/json
+
+{
+    "username":"user2",
+    "email":"user2@gmail.com",
+    "password":"12345678",
+    "roles":["user", "moderator", "admin"]
+}
+
+###
+
+POST http://localhost:6868/api/auth/signin
+Content-Type: application/json
+
+{
+    "username":"user2",
+    "password":"12345678"
+}
