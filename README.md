@@ -71,7 +71,8 @@
 
 + techstack: nodejs + express + postgresql + sequelize (ORM) + docker
     + token-based authentication, there are 3 important parts of a JWT: `[header].[payload].[signature]`. Client typically attaches JWT in `Authorization` header with `Bearer` prefix or in `x-access-token` header on each request after successful authentication.
-
+    + referrer:
+        + https://sequelize.org/
 + overview of this app:
     + user can signup new account, or login with username & password
     + user info will be stored in PostgreSQL database
@@ -115,3 +116,107 @@
         + https://www.bezkoder.com/docker-compose-nodejs-postgres/
         + https://dev.to/nodepractices/docker-best-practices-with-node-js-4ln4
         + https://www.digitalocean.com/community/tutorials/how-to-build-a-node-js-application-with-docker
+
+### b. Securing passwords in Node.js: the Argon2 way
+
+> https://hackernoon.com/argon2-in-practice-how-to-implement-secure-password-hashing-in-your-application
+
++ Argon2 was specifically designed to counter the most elegant attack vectors that we have today --> password hashing champion.
+
++ pros:
+    + memory-hardness: argon2 uses huge amounts of memory while hashing. --> scalable use of GPUs or ASICs cannot be relied upon by attackers in cracking passwords --> very expensive in parallel computing environments
+    + tunable parameters: adjust on memory capacity usage, parallelism and execution time
+    + defense-in-depth: designed to resist not only brute-force attacks, but also side-channel attacks, time-memory trade-offs, and many other complicated ways hackers break passwords.
+
++ we will use `argon2id`, the hybrid solution from `argon2i` and `argon2d`, and the one most often recommended. In Node.js world, `argon2` is probably the most famous package binding to the C implementation
+
+    ```bash
+    $ npm install argon2
+    ```
+
++ actual implementation: hashing passwords with argon2
+    + step 1: generate a cryptographically secure salt. In node.js,  we use `crypto.randomBytes()`. A salt length should preferably be 16 bytes or more (128bits) in size.
+    + step 2: set up Argon2 parameters (where the most common mistakes occur for many devs). Benchmarking it on the server and calibrating your params to obtain a hashing time of 250-500ms.
+        + Memory cost: how much memory the algorithm will use, the more the better is for security. (KiB)
+        + Time cost: the number of iterations or passes over the memory. High is slow but provides more security.
+        + Parallelism: how many parallel threds should it use? usually, that should match the number of available CPU cores
+        + Hash length: the output size of the hash expressed in bytes
+    + step 3: call the Argon2 Hash function
+
+    ```javascript
+    <!-- Nodejs example -->
+    const argon2 = require('argon2');
+    const crypto = require('crypto');
+    // we can use additional PEPPER
+    async function hashPassword(password) {
+        // Configure the algorithm
+        const options = {
+            type: argon2.argon2id,    // Variant of Argon2
+            memoryCost: 65536,        // 64 MiB
+            timeCost: 2,              // 2 passes
+            parallelism: 4,           // 4 threads
+            hashLength: 32,           // 32 bytes output
+            saltLength: 16,           // 16 bytes salt
+            // You can also provide your own salt:
+            // salt: crypto.randomBytes(16) 
+        };
+        
+        try {
+            // Hash the password (salt is generated automatically by default)
+            const hash = await argon2.hash(password, options);
+            return hash;
+        } catch (err) {
+            console.error('Error hashing password:', err);
+            throw err;
+        }
+    }
+
+    // Example usage
+    hashPassword('super_secret_password')
+        .then(hash => console.log('Hashed password:', hash))
+        .catch(err => console.error(err));
+
+    // This will produce something like:
+    // $argon2id$v=19$m=65536,t=3,p=4$G8NYSxrA+UMGHJbZVIXXXQ$UrHyBcYfCEms+92QVzGmfYqrWtH54WJY9FuROBQi/X8
+    ```
++ Understanding the Output Format
+    ```javascript
+    $argon2id$v=19$m=65536,t=3,p=4$G8NYSxrA+UMGHJbZVIXXXQ$UrHyBcYfCEms+92QVzGmfYqrWtH54WJY9FuROBQi/X8
+    ```
+    + `$argon2id`: the variant of the algorithm
+    + `v=19`: version of the argon2 
+    + `m=65536,t=3,p=4`: parameters (memory=65536 KiB, time=3 iterations, parallelism=4 threads)
+    + `G8NYSxrA+UMGHJbZVIXXXQ`: base64-encoded salt
+    + `UrHyBcYfCEms+92QVzGmfYqrWtH54WJY9FuROBQi/X8`: base64-encoded hash
+
++ Verifying Passwords Securely
+
+    ```javascript
+    const argon2 = require('argon2');
+
+    async function verifyPassword(storedHash, providedPassword) {
+        try {
+            // The verify function returns true if the password matches
+            // It returns false if the password doesn't match
+            const isValid = await argon2.verify(storedHash, providedPassword);
+            return isValid;
+        } catch (err) {
+            // Handle errors like invalid hash format
+            console.error('Error during password verification:', err);
+            return false;
+        }
+    }
+
+    // Example usage
+    const storedHash = '$argon2id$v=19$m=65536,t=3,p=4$G8NYSxrA+UMGHJbZVIXXXQ$UrHyBcYfCEms+92QVzGmfYqrWtH54WJY9FuROBQi/X8';
+
+    verifyPassword(storedHash, 'super_secret_password')
+        .then(isValid => {
+            if (isValid) {
+                console.log('Password is correct!');
+            } else {
+                console.log('Password is incorrect!');
+            }
+        })
+        .catch(err => console.error(err));
+    ```

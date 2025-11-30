@@ -19,7 +19,6 @@ app.use(express.urlencoded({extended: true}))
 const PORT = process.env.NODE_DOCKER_PORT | 8080
 
 const db = require('./app/models')
-const { logger } = require('sequelize/lib/utils/logger')
 const Role = db.role
 
 db.sequelize.sync({force: true}).then(() => {

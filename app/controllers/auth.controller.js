@@ -1,93 +1,130 @@
 // handle signup & signin actions
 const db = require('../models')
 const config = require('../config/auth.config')
+const jwt = require('jsonwebtoken')
+// var bcrypt = require('bcryptjs')
+const argon2 = require('argon2')
+
 const User = db.user
 const Role = db.role
 
 const Op = db.Sequelize.Op
+const pepper = process.env.PEPPER
 
-var jwt = require('jsonwebtoken')
-var bcrypt = require('bcryptjs')
+// Configure the algorithm
+const options = {
+    type: argon2.argon2id,    // Variant of Argon2
+    memoryCost: 65536,        // 64 MiB
+    timeCost: 2,              // 2 passes
+    parallelism: 4,           // 4 threads
+    hashLength: 32,           // 32 bytes output
+    saltLength: 16,           // 16 bytes salt
+    // You can also provide your own salt:
+    // salt: crypto.randomBytes(16) 
+};
 
-// convert to async/await later!
-exports.signup = (req, res) => {
-    console.log('GET /api/auth/signup route was accessed')
-    // save user to database
-    User.create({
-        username: req.body.username,
-        email: req.body.email,
-        password: bcrypt.hashSync(req.body.password, 8)
-    })
-    .then(user => {
-        if (req.body.roles) {
-            Role.findAll({
+const hashPassword = async (password) => {
+    try {
+        // hash the password (salt is generated automatically by default)
+        const hash = await argon2.hash(password + pepper, options)
+        return hash
+    } catch (error) {
+        console.error('Error hashing password: ',err)
+        throw error        
+    }
+}
+
+const verifyPassword = async (storedHash, providedPassword) => {
+    try {
+        // the verify function returns true if the password matches
+        // it returns false if the password doesn't match
+        const isValid = await argon2.verify(storedHash, providedPassword + pepper)
+        return isValid
+    } catch (error) {
+        console.error('Error during password verification: ', error)
+        return false
+    }
+}
+
+exports.signup = async (req, res) => {
+    try {
+        const passwordHash = await hashPassword(req.body.password)
+        const user = await User.create({
+            username: req.body.username,
+            email: req.body.email,
+            password: passwordHash
+        })
+        console.log('Password Hash: ', passwordHash)
+        if (req.body.roles && Array.isArray(req.body.roles) && req.body.roles.length > 0) {
+            console.log("req.body.roles: ", req.body.roles)
+            const roles = await Role.findAll({
                 where: {
                     name: {
                         [Op.or]: req.body.roles
                     }
                 }
-            }).then(roles => {
-                user.setRoles(roles).then(() => {
-                    res.send({message: 'User was registered successfully!'})
-                })
             })
+            console.log(roles)
+            await user.setRoles(roles)
+            return res.status(201).send({ message: 'User registered successfully!' })
         } else {
-            // user role = 1
-            user.setRoles([1]).then(() => {
-                res.send({message: 'User was registered successfully!'})
-            })
+            await user.setRoles([1]);
+            return res.status(201).send({ message: "User registered successfully!" })
         }
-    })
-    .catch(err => {
-        res.status(500).send({message: err.message})
-    })
+    } catch (err) {
+        console.error("Signup error:", err)
+        return res.status(500).send({ 
+            message: "Failed to register user",
+            error: err.message 
+        })
+    }
 }
 
-exports.signin = (req, res) => {
-    console.log('GET /api/auth/signin route was accessed')
-    User.findOne({
-        where: {
-            username: req.body.username
-        }
-    })
-    .then (user => {
+exports.signin = async (req, res) => {
+    try {
+        const user = await User.findOne({
+            where: {
+                username: req.body.username
+            }
+        })
+
         if (!user) {
-            return res.status(404).send({message: 'User not found.'})
-        }
-
-        var passwordIsValid = bcrypt.compareSync(
-            req.body.password,
-            user.password
-        )
-
-        if (!passwordIsValid) {
-            return res.status(401).send({
-                accessToken: null,
-                message: 'Invalid Password!'
+            return res.status(404).send({
+                message: 'User not found'
             })
         }
 
-        const token = jwt.sign({id: user.id}, config.secret, {
+        const isValidPassword = await verifyPassword(user.password, req.body.password)
+        if (!isValidPassword) {
+            return res.status(401).send({
+                message: 'Invalid password'
+            })
+        }
+
+        const accessToken = jwt.sign({id: user.id}, config.secret, {
             algorithm: 'HS256',
             allowInsecureKeySizes: true,
             expiresIn: 86400
         })
-
+        
         var authorities = []
-        user.getRoles().then(roles => {
-            for (let i = 0; i < roles.length; i++) {
-                authorities.push('ROLE_' + roles[i].name.toUpperCase())
-            }
-            res.status(200).send({
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                roles: authorities,
-                accessToken: token
-            })
+        const roles = await user.getRoles()
+        for (let i = 0; i < roles; i++) {
+            authorities.push('ROLE_' + roles[i].name.toUpperCase())
+        }
+        return res.status(200).send({
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            roles: authorities,
+            accessToken: accessToken
         })
-    })
-    .catch(err => {
-        res.status(500).send({message: err.message})
-    })
+
+    } catch (error) {
+        console.log(error.message)
+        return res.status(500).send({
+            message: "Failed to signin",
+            error: error.message
+        })
+    }
 }
