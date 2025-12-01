@@ -112,6 +112,8 @@
         + `docker compose up`, no rebuild, just restart container -> volume mount hot-reload automatically
         + `docker compose down`, stop + delete container (DB is still alive via volume)
         + `docker compose down -v`, reset everything, include DB
+    + docker + nodemon for dev environment
+        + changing code won't restart the server, refer: https://stackoverflow.com/questions/27226653/nodemon-is-not-working-in-docker-environment
     + referrer: 
         + https://www.bezkoder.com/docker-compose-nodejs-postgres/
         + https://dev.to/nodepractices/docker-best-practices-with-node-js-4ln4

@@ -1,9 +1,12 @@
 // import and initialize neccesary modules and routes, listen for connections
 const express = require('express')
 const cors = require('cors')
+const morgan = require('morgan')
 require('dotenv').config()
+const db = require('./models')
 
 const app = express()
+app.use(morgan('combined'))
 
 var corsOptions = {
     // only allow front-end from localhost:8081
@@ -18,9 +21,7 @@ app.use(express.urlencoded({extended: true}))
 
 const PORT = process.env.NODE_DOCKER_PORT | 8080
 
-const db = require('./app/models')
 const Role = db.role
-
 db.sequelize.sync({force: true}).then(() => {
     console.log('Drop and Resync DB')
     initial()
@@ -42,13 +43,12 @@ function initial() {
 }
 
 app.get('/', (req, res) => {
-    console.log('GET / route was accessed')
     res.send('Welcome!')
 })
 
 // routes
-require('./app/routes/auth.routes')(app);
-require('./app/routes/user.routes')(app);
+require('./routes/auth.routes')(app);
+require('./routes/user.routes')(app);
 
 app.listen(PORT, () => {
     console.log(`app listening on port ${PORT}`)

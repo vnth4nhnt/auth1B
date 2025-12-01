@@ -54,9 +54,7 @@ exports.signup = async (req, res) => {
             email: req.body.email,
             password: passwordHash
         })
-        console.log('Password Hash: ', passwordHash)
         if (req.body.roles && Array.isArray(req.body.roles) && req.body.roles.length > 0) {
-            console.log("req.body.roles: ", req.body.roles)
             const roles = await Role.findAll({
                 where: {
                     name: {
@@ -64,7 +62,6 @@ exports.signup = async (req, res) => {
                     }
                 }
             })
-            console.log(roles)
             await user.setRoles(roles)
             return res.status(201).send({ message: 'User registered successfully!' })
         } else {
