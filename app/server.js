@@ -3,6 +3,7 @@ const express = require('express')
 const cors = require('cors')
 const morgan = require('morgan')
 require('dotenv').config()
+const cookieParser = require('cookie-parser')
 const db = require('./models')
 
 const app = express()
@@ -18,6 +19,7 @@ app.use(cors(corsOptions))
 app.use(express.json())
 // parse requests of content-type - application/x-www-form-urlencoded
 app.use(express.urlencoded({extended: true}))
+app.use(cookieParser())
 
 const PORT = process.env.NODE_DOCKER_PORT | 8080
 

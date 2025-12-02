@@ -1,4 +1,5 @@
 // configure Auth Key
 module.exports = {
-    secret: process.env.AUTH_SECRET
+    access_secret: process.env.AUTH_SECRET,
+    refresh_secret: process.env.REFRESH_SECRET
 }

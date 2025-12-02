@@ -222,3 +222,71 @@
         })
         .catch(err => console.error(err));
     ```
+### c. Access tokens (JWTs) and Refresh tokens. Refresh token rotation and reuse detection
+
++ JWTs are portable units of identity. They contain identity information as JSON and can be passed around to services and apps.
+    + The service/app receiving a JWT doesn't need to ask the identity provider that generated the JWT if it is valid
+    + Once a JWT is verified, the service/app can use the data inside it to take action on behalf of the user
+
++ JWTs expire at specific intervals: it is quite different with traditional session. 
+    + for security purposes, access tokens (JWTs) may be valid for a short amount of time (usually 10-30 minutes to minimize risk)
+    + refresh tokens appear - opaque tokens that are used to generate new JWTs. Once JWTs expire, client apps can use a refresh token to "refresh" the access token without having to ask the user to log in again.
+
++ JWTs are cryptographically signed: they require a cryptographic algorithm to verify
+
+    <img src="images/jwt-structure.png" height=400>
+
+    + RSA public-private key signing: slow signing using private key and fast verifying using public key. On a quad-core MacBook Pro, about 200 JWT/s. This number drops dramatically on virtualized hardware like Amazon EC2s
+    + HMAC signing: much faster but lacks the same flexibility and security characteristics. If the identity provider uses HMAC to sign a JWT, then all services that want to verify the JWT must have the HMAC secret --> this means that all the services can now crete and sign JWTs as well --> less portable and less secure
+
++ JWTs aren't easily revocable: JWT could be valid even though the user's account has been suspended or deleted
+    + solution: https://fusionauth.io/articles/tokens/revoking-jwts
+
++ JWTs have exploits:
+    <later>
+
++ Alone access token is not enough for security, we need to implement both access token and refresh token. But we need to implement it properly.
+    + access token = short time, refresh token = long time
+    + access token: sent as JSON, client stores in memory, DO NOT store in local storage or cookie
+    + refresh token: sent as httpOnly cookie, not accessible via JavaScript, must have expiry at some point
+    + access token: sent with every api request until expires, new token issued at Refresh request
+
+    + Normal login flow with JWT:
+
+    <img src="./images/normal-login-flow-with-jwt.png" height=400>
+
+    + Login flow with access token & refresh token
+
+    <img src="./images/login-flow-with-access-token-n-refresh-token-1.png" height=400>
+
+    + what if tokens expire
+    
+    <img src="./images/login-flow-with-access-token-n-refresh-token-2.png" height=400>
+
+    + refresh token rotation and reuse detection: 
+        + ref: https://www.youtube.com/watch?v=s-4k5TcGKHg
+        
+        + what if refresh token is comprised? --> malicious access would be granted until the refresh token expires
+        + refresh token rotation: when a new access token is issued, a new refresh token is also issued
+        + reuse detection: a refresh token can only be used once. If reuse is detected, all refresh tokens are invalidated for the user which will force a new login for authentication.
++ Keeping refresh tokens secure: refresh tokens are also bearer tokens --> we need to have a strategy in place that limits or curtails their usage if they ever get leaked or become compromised
+    + refresh token rotation: a technique for getting new access tokens using refresh tokens that goes beyond [silent-authentication](https://auth0.com/docs/authenticate/login/configure-silent-authentication). It guarantees that every time an app exchanges a refresh token to get a new access token, a new refresh token is also returned
+    + refresh token automatic reuse detection: refresh tokens are bearer tokens --> impossible for the authorization server to know who is legitimate or malicious when receiving a new access token request --> treat all users as potentially malicious --> detect reuse refresh token --> denial all! --> requires re-authentication to get new access and refresh tokens
+    + when we have refresh token rotation in place, we can store tokens in local storage or browser memory even if XSS attack happens!!
+
++ we now have 2 apis more: 
+
+    | Methods   | Urls              | Actions               |
+    |-----------|-------------------|-----------------------|
+    | POST      | /api/auth/signup  | signup new account    |
+    | POST      | /api/auth/signin  | login an account      |
+    | POST      | /api/auth/refresh | refresh access token  |
+    | GET       | /api/auth/logout  | logout                |
+    | GET       | /api/test/all     | retrieve public content   |
+    | GET       | /api/test/user    | access User's content |
+    | GET       | /api/test/mod     | access Moderator's content    |
+    | GET       | /api/test/admin   | access Admin's content    |
+
++ And lastly, we can implement periodic cleanup job for automatically DB cleanup expired refresh token 
+    + using Node.js cron job (inside the app)
+    + using PostgreSQL `pg_cron` extension (high-recommended strategy)

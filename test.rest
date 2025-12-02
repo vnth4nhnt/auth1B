@@ -7,18 +7,19 @@ Origin: null
 ###
 
 GET http://localhost:6868/api/test/user
-
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImUxNTljY2Y5LWEyNTctNDY3NC1hNjg2LWIxNzViMzM3ODQ0YSIsImlhdCI6MTc2NDY0NTYyNSwiZXhwIjoxNzY0NjQ1Njg1fQ.zivauMy6d0R4pU1TuyL2bVt2itPhDv2BcNmQU_Vuvaw
 ###
 
 GET http://localhost:6868/api/test/mod
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImUxNTljY2Y5LWEyNTctNDY3NC1hNjg2LWIxNzViMzM3ODQ0YSIsImlhdCI6MTc2NDY0NTYyNSwiZXhwIjoxNzY0NjQ1Njg1fQ.zivauMy6d0R4pU1TuyL2bVt2itPhDv2BcNmQU_Vuvaw
 
 ###
 
 GET http://localhost:6868/api/test/admin
-x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImZhYjRiOWRiLWYzMTYtNDY1Ny05MWIwLTEyMGU2NGU2MGY5OCIsImlhdCI6MTc2NDQwODI4NCwiZXhwIjoxNzY0NDk0Njg0fQ.5kAhN3MlNpo5zHJ6CbE57SJ2pQqqxjRiPOA2uJ__cdI
+Cookie: refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBmOTQ4ZTZjLTM3MTctNDFhMy1iMDIxLWEyMzlkNGI3OTc5YSIsImlhdCI6MTc2NDY2NTY2NiwiZXhwIjoxNzY0NzUyMDY2fQ.eXfxd04nOto7Veawygej6DFHKu2hFv1q4VwQ7EkP_kc
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBmOTQ4ZTZjLTM3MTctNDFhMy1iMDIxLWEyMzlkNGI3OTc5YSIsImlhdCI6MTc2NDY2NTYwNSwiZXhwIjoxNzY0NjY2NTA1fQ.xb8oVm0FTeKm0bzhY-MNpWLUTlak7R9Mse78zQMCziE
 
 ###
-
 POST http://localhost:6868/api/auth/signup
 Content-Type: application/json
 
@@ -38,3 +39,14 @@ Content-Type: application/json
     "username":"user2",
     "password":"12345678"
 }
+
+###
+
+POST http://localhost:6868/api/auth/refresh
+Cookie: refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBmOTQ4ZTZjLTM3MTctNDFhMy1iMDIxLWEyMzlkNGI3OTc5YSIsImlhdCI6MTc2NDY2NTcxMCwiZXhwIjoxNzY0NzUyMTEwfQ.K2-5jbSMNq9GhsPcS0oe9gUs6LR4pAZiw7jHwceXdwQ
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBmOTQ4ZTZjLTM3MTctNDFhMy1iMDIxLWEyMzlkNGI3OTc5YSIsImlhdCI6MTc2NDY2NTYwNSwiZXhwIjoxNzY0NjY2NTA1fQ.xb8oVm0FTeKm0bzhY-MNpWLUTlak7R9Mse78zQMCziE
+
+###
+GET http://localhost:6868/api/auth/logout
+Cookie: refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBmOTQ4ZTZjLTM3MTctNDFhMy1iMDIxLWEyMzlkNGI3OTc5YSIsImlhdCI6MTc2NDY2NTc0MSwiZXhwIjoxNzY0NzUyMTQxfQ._yywur3PC-8gMapAa0A50YzgeQOwLTg1izy0_CPFyVY
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjBmOTQ4ZTZjLTM3MTctNDFhMy1iMDIxLWEyMzlkNGI3OTc5YSIsImlhdCI6MTc2NDY2NTYwNSwiZXhwIjoxNzY0NjY2NTA1fQ.xb8oVm0FTeKm0bzhY-MNpWLUTlak7R9Mse78zQMCziE

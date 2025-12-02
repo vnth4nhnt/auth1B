@@ -7,6 +7,7 @@ const argon2 = require('argon2')
 
 const User = db.user
 const Role = db.role
+const RefreshToken = db.refreshToken
 
 const Op = db.Sequelize.Op
 const pepper = process.env.PEPPER
@@ -98,17 +99,36 @@ exports.signin = async (req, res) => {
             })
         }
 
-        const accessToken = jwt.sign({id: user.id}, config.secret, {
+        const accessToken = jwt.sign({id: user.id}, config.access_secret, {
             algorithm: 'HS256',
             allowInsecureKeySizes: true,
-            expiresIn: 86400
+            expiresIn: "15m"
         })
-        
+
+        const refreshToken = jwt.sign({id: user.id}, config.refresh_secret, {
+            algorithm: 'HS256',
+            allowInsecureKeySizes: true,
+            expiresIn: "1d"
+        })
+
+        // save refresh token on database
+        await RefreshToken.create({
+            userId: user.id,
+            token: refreshToken
+        })
+
         var authorities = []
         const roles = await user.getRoles()
         for (let i = 0; i < roles; i++) {
             authorities.push('ROLE_' + roles[i].name.toUpperCase())
         }
+
+        // store refresh token in HTTP-only cookie
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: true, // use true in production
+            sameSite: 'strict'
+        })
         return res.status(200).send({
             id: user.id,
             username: user.username,
@@ -123,5 +143,34 @@ exports.signin = async (req, res) => {
             message: "Failed to signin",
             error: error.message
         })
+    }
+}
+
+exports.logout = async (req, res) => {
+    try {
+        // on client, also delete the access token 
+        const refreshToken = req.cookies.refreshToken
+
+        if (!refreshToken) return res.status(204).send()
+
+        // delete refresh token on database on server-side, clear refresh token and access token on client side
+        const foundUser = await RefreshToken.findOne({
+            where: {
+                token: refreshToken
+            }
+        })
+        res.clearCookie('refreshToken')
+        if (!foundUser || foundUser.userId != req.userId) {
+            console.log(foundUser)
+            return res.status(204).send()
+        }
+        await RefreshToken.destroy({
+            where: {
+                token: refreshToken
+            }
+        })
+        return res.status(200).json({message: 'Successfully logout!'})
+    } catch (error) {
+        return res.status(403).json({error: error})
     }
 }
