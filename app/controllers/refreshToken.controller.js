@@ -1,5 +1,5 @@
-const db = require('../models')
-const config = require('../config/auth.config')
+const { db } = require('../models')
+const { auth } = require('../config')
 const jwt = require('jsonwebtoken')
 
 const RefreshToken = db.refreshToken
@@ -24,7 +24,7 @@ exports.refreshToken = async (req, res) => {
         // detect refresh token reuse: is refresh token in DB? 
         if (!isRefreshTokenInDB) {
             // delete all refresh token of hacked user --> force a new login for authentication
-            decoded = jwt.verify(refreshToken, config.refresh_secret) 
+            decoded = jwt.verify(refreshToken, auth.refresh_secret) 
             const hackedUserId = decoded.id
             await RefreshToken.destroy({
                 where: {
@@ -37,14 +37,14 @@ exports.refreshToken = async (req, res) => {
         }
 
         // evaluate refresh token
-        decoded = jwt.verify(refreshToken, config.refresh_secret)
-        const newAccessToken = jwt.sign({id: decoded.id}, config.access_secret, {
+        decoded = jwt.verify(refreshToken, auth.refresh_secret)
+        const newAccessToken = jwt.sign({id: decoded.id}, auth.access_secret, {
             algorithm: 'HS256',
             allowInsecureKeySizes: true,
             expiresIn: "15m"
         })
         
-        const newRefreshToken = jwt.sign({id: decoded.id}, config.refresh_secret, {
+        const newRefreshToken = jwt.sign({id: decoded.id}, auth.refresh_secret, {
             algorithm: 'HS256',
             allowInsecureKeySizes: true,
             expiresIn: "1d"

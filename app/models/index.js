@@ -1,18 +1,19 @@
-const config = require('../config/db.config.js')
+const { database, redis } = require('../config')
+const redis_client = require('redis')
 
 const Sequelize = require('sequelize')
 const sequelize = new Sequelize(
-    config.DB,
-    config.USER,
-    config.PASSWORD,
+    database.DB,
+    database.USER,
+    database.PASSWORD,
     {
-        host: config.HOST,
-        dialect: config.dialect,
+        host: database.HOST,
+        dialect: database.dialect,
         pool: {
-            max: config.pool.max,
-            min: config.pool.min,
-            acquire: config.pool.min,
-            idle: config.pool.idle
+            max: database.pool.max,
+            min: database.pool.min,
+            acquire: database.pool.min,
+            idle: database.pool.idle
         }
     }
 )
@@ -43,4 +44,16 @@ db.refreshToken.belongsTo(db.user)
 
 db.ROLES = ['user', 'admin', 'moderator']
 
-module.exports = db
+// redis connections
+const redisClient = redis_client.createClient({
+    socket: {
+        host: redis.HOST,
+        port: redis.PORT
+    },
+    password: redis.PASSWORD
+})
+
+module.exports = {
+    db,
+    redisClient
+}

@@ -1,6 +1,6 @@
 // handle signup & signin actions
-const db = require('../models')
-const config = require('../config/auth.config')
+const { db } = require('../models')
+const { auth } = require('../config')
 const jwt = require('jsonwebtoken')
 // var bcrypt = require('bcryptjs')
 const argon2 = require('argon2')
@@ -99,13 +99,13 @@ exports.signin = async (req, res) => {
             })
         }
 
-        const accessToken = jwt.sign({id: user.id}, config.access_secret, {
+        const accessToken = jwt.sign({id: user.id}, auth.access_secret, {
             algorithm: 'HS256',
             allowInsecureKeySizes: true,
             expiresIn: "15m"
         })
 
-        const refreshToken = jwt.sign({id: user.id}, config.refresh_secret, {
+        const refreshToken = jwt.sign({id: user.id}, auth.refresh_secret, {
             algorithm: 'HS256',
             allowInsecureKeySizes: true,
             expiresIn: "1d"

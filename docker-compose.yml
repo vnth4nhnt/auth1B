@@ -5,29 +5,38 @@ services:
   postgresdb:
     image: postgres
     restart: unless-stopped
-    env_file: ./.env
     environment:
       - POSTGRES_USER=$POSTGRESDB_USER
       - POSTGRES_PASSWORD=$POSTGRESDB_ROOT_PASSWORD
       - POSTGRES_DB=$POSTGRESDB_DATABASE
-    ports:
-      - $POSTGRESDB_LOCAL_PORT:$POSTGRESDB_DOCKER_PORT
     volumes:
       - db:/var/lib/postgres
+  redis:
+    image: redis:latest
+    restart: always
+    command: redis-server --save 20 1 --loglevel warning --requirepass $REDIS_PASSWORD
+    volumes:
+      - redis_cache:/data
   app:
     depends_on:
       - postgresdb
+      - redis
     build: ./
     restart: unless-stopped
     ports:
       - $NODE_LOCAL_PORT:$NODE_DOCKER_PORT
-    env_file: ./.env
     environment:
+      - AUTH_SECRET=$AUTH_SECRET
+      - REFRESH_SECRET=$REFRESH_SECRET
+      - PEPPER=$PEPPER
       - DB_HOST=postgresdb
       - DB_USER=$POSTGRESDB_USER
       - DB_PASSWORD=$POSTGRESDB_ROOT_PASSWORD
       - DB_NAME=$POSTGRESDB_DATABASE
       - DB_PORT=$POSTGRESDB_DOCKER_PORT
+      - REDIS_HOST=redis
+      - REDIS_PORT=$REDIS_DOCKER_PORT
+      - REDIS_PASSWORD=$REDIS_PASSWORD
     volumes:
       - ./app:/app/app # realtime code sync from your editor into the running Docker container
     stdin_open: true
@@ -36,3 +45,4 @@ services:
 # named volumes that keeps our data alive after restart
 volumes:
   db:
+  redis_cache:

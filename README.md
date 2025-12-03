@@ -290,3 +290,34 @@
 + And lastly, we can implement periodic cleanup job for automatically DB cleanup expired refresh token 
     + using Node.js cron job (inside the app)
     + using PostgreSQL `pg_cron` extension (high-recommended strategy)
+
+### d. Implement rate limiting, CAPTCHA and lockout policies
+
++ rate limiting:
+    + https://dev.to/hamzakhan/api-rate-limiting-in-nodejs-strategies-and-best-practices-3gef
+    + control the number of requests a client can make to the API within a specified timeframe
+    + why it matters:
+        + enhancing security: preventing brute-force attacks
+        + improving performance: ensuring fair resource allocation   
+        + maintaining stability: avoiding server overload   
+    + leveraging `express-rate-limit` for basic limiting
+        + https://www.npmjs.com/package/express-rate-limit
+        + limitations of basic rate limiting:
+            + shared across all routes
+            + inflexible for diverse API endpoints
+    + distributed rate limiting with redis
+        + https://www.sudshekhar.com/blog/api-rate-limiting-redis-nodejs
+        + when running APIs on multiple servers, in-memory rate limiting falls short. Redis, a fast, in-memory data store, provides a robust solution for distributed rate limiting.
+        + pros. Supports distributed systems, Customizable for different endpoints
+    + token bucket algorithm for advanced rate limiting
+        + https://dev.to/hexshift/rate-limiting-in-nodejs-using-redis-and-token-bucket-algorithm-30ah
+    + find-grained rate limiting with api gateways
+    + monitoring and alerts: using tools like `datadog` or `prometheus` to monitor request rates, rejected request (http 429) and api performance metrics
+    + benchmark.
+    + best practices for API rate limiting:
+        + Use redis or API gateway for distributed setups
+        + apply different rate limits for free vs premium users
+        + always provide clear error message 
+        + monitor and fine-tune based on traffic patterns
+        + production = redis + token bucket algorithm + prometheus; nginx. Only use express-rate-limit for dev/local
+    

@@ -1,8 +1,9 @@
 // verify Token, check User roles in database
 
 const jwt = require('jsonwebtoken')
-const config = require('../config/auth.config')
-const db = require('../models')
+const { auth } = require('../config')
+const { db } = require('../models')
+
 const User = db.user
 
 verifyToken = (req, res, next) => {
@@ -13,7 +14,7 @@ verifyToken = (req, res, next) => {
         })
     }
 
-    jwt.verify(token, config.access_secret, (err, decoded) => {
+    jwt.verify(token, auth.access_secret, (err, decoded) => {
         if (err) {
             return res.status(401).send({
                 error: err,
