@@ -22,7 +22,11 @@ app.use(morgan('combined'))
 // // Apply the rate limiting middleware to all requests.
 // app.use(limiter)
 
-app.use(rateLimiter(2, 5))
+// app.use(rateLimiter(2, 5))
+app.use(rateLimiter({
+    bucketSize: 20,
+    refillRate: 0.5 // one token every 2s
+}))
 
 var corsOptions = {
     // only allow front-end from localhost:8081
